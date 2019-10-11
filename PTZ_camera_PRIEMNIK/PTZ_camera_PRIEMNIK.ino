@@ -31,13 +31,18 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
     uint32_t FailedTxCount;
     int16_t value;
 };
-
+int16_t i;
 NRFLite _radio;
 RadioPacket _radioData;
+
+#include <ServoSmooth.h>
+ServoSmooth servo;
 
 void setup()
 {
     Serial.begin(9600);
+    
+    Serial.println("Start");
 
     // By default, 'init' configures the radio to use a 2MBPS bitrate on channel 100 (channels 0-125 are valid).
     // Both the RX and TX radios must have the same bitrate and channel to communicate with each other.
@@ -52,10 +57,25 @@ void setup()
         Serial.println("Cannot communicate with radio");
         while (1); // Wait here forever.
     }
+
+    servo.attach(6, 600, 2400);  // 600 и 2400 - длины импульсов, при которых
+  // серво поворачивается максимально в одну и другую сторону, зависят от самой серво
+  // и обычно даже указываются продавцом. Мы их тут указываем для того, чтобы
+  // метод setTargetDeg() корректно отрабатывал диапазон поворота сервы
+  
+  servo.setSpeed(100);   // ограничить скорость
+  servo.setAccel(1);  // установить ускорение (разгон и торможение)
+  
+  servo.setAutoDetach(true);  // отключить автоотключение (detach) при достижении целевого угла (по умолчанию включено)
+
+  
 }
 
 void loop()
 {
+  servo.tick();   // здесь происходит движение серво по встроенному таймеру!
+
+  
     while (_radio.hasData())
     {
         _radio.readData(&_radioData); // Note how '&' must be placed in front of the variable name.
@@ -68,10 +88,23 @@ void loop()
         msg += _radioData.OnTimeS;
         msg += " s, ";
         msg += _radioData.value;
+        i = _radioData.value;
         msg += ", ";
         msg += _radioData.FailedTxCount;
-        msg += " Failed TX";
+        msg += " Failed TX;  |";
+        for (i; i>0; i -= 20) { msg += "|"; }
 
-        Serial.println(msg);
+        Serial.println(msg); 
+        
+        // желаемая позиция задаётся методом setTarget (импульс) или setTargetDeg (угол), далее
+  // при вызове tick() производится автоматическое движение сервы
+  // с заданным ускорением и ограничением скорости
+
+  int newPos = map(_radioData.value, 0, 1023, 0, 155); // берём с потенцометра значение 0-180
+  servo.setTargetDeg(newPos);               // и отправляем на серво
+  servo.tick();   // здесь происходит движение серво по встроенному таймеру!
     }
+
+
+  
 }

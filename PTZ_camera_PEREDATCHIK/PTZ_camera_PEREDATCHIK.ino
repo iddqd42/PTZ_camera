@@ -32,7 +32,7 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
     uint32_t OnTimeMillis;
     uint32_t OnTimeS;
     uint32_t FailedTxCount;
-    int16_t value=0;
+    int16_t value=500;
 };
 
 NRFLite _radio;
@@ -51,7 +51,9 @@ uint32_t Time1 = 0;       // максимальное время работы м
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
+    
+    Serial.print("Start");
     
     // By default, 'init' configures the radio to use a 2MBPS bitrate on channel 100 (channels 0-125 are valid).
     // Both the RX and TX radios must have the same bitrate and channel to communicate with each other.
@@ -78,11 +80,14 @@ void loop()
 
 
   enc1.tick();
-if (enc1.isRight()) _radioData.value++;      // если был поворот направо, увеличиваем на 1
-if (enc1.isLeft()) _radioData.value--;     // если был поворот налево, уменьшаем на 1
-if (enc1.isRightH()) _radioData.value += 5;  // если было удержание + поворот направо, увеличиваем на 5
-if (enc1.isLeftH()) _radioData.value -= 5; // если было удержание + поворот налево, уменьшаем на 5  
+if (enc1.isRight()) _radioData.value += 20;      // если был поворот направо, увеличиваем на 1
+if (enc1.isLeft()) _radioData.value -= 20;     // если был поворот налево, уменьшаем на 1
+if (enc1.isRightH()) _radioData.value += 20;  // если было удержание + поворот направо, увеличиваем на 5
+if (enc1.isLeftH()) _radioData.value -= 20; // если было удержание + поворот налево, уменьшаем на 5  
 if (enc1.isTurn()) {       // если был совершён поворот (индикатор поворота в любую сторону)
+  if (_radioData.value < 0) _radioData.value = 0;
+  if (_radioData.value > 1000) _radioData.value = 1000;
+  
 Serial.println(_radioData.value);   // выводим значение при повороте
 
 for (int i=0; i<3; i++){
@@ -104,6 +109,7 @@ for (int i=0; i<3; i++){
     if (_radio.send(DESTINATION_RADIO_ID, &_radioData, sizeof(_radioData))) // Note how '&' must be placed in front of the variable name.
     {
         Serial.println("...Success");
+        i=3;
     }
     else
     {
