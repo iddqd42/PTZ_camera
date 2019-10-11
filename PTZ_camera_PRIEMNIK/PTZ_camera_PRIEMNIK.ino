@@ -29,6 +29,7 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
     uint32_t OnTimeMillis;
     uint32_t OnTimeS;
     uint32_t FailedTxCount;
+    int16_t value;
 };
 
 NRFLite _radio;
@@ -66,6 +67,8 @@ void loop()
         msg += " ms, ";
         msg += _radioData.OnTimeS;
         msg += " s, ";
+        msg += _radioData.value;
+        msg += ", ";
         msg += _radioData.FailedTxCount;
         msg += " Failed TX";
 

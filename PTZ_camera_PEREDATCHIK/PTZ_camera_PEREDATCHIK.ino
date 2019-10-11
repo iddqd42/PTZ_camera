@@ -19,6 +19,8 @@ GND   -> GND
 #include <SPI.h>
 #include <NRFLite.h>
 
+
+
 const static uint8_t RADIO_ID = 1;             // Our radio's id.
 const static uint8_t DESTINATION_RADIO_ID = 3; // Id of the radio we will transmit to.
 const static uint8_t PIN_RADIO_CE = 9;
@@ -30,10 +32,22 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
     uint32_t OnTimeMillis;
     uint32_t OnTimeS;
     uint32_t FailedTxCount;
+    int16_t value=0;
 };
 
 NRFLite _radio;
 RadioPacket _radioData;
+
+
+
+#define CLK 5
+#define DT 6
+#define SW 7
+#include "GyverEncoder.h"
+Encoder enc1(CLK, DT, SW);
+
+
+uint32_t Time1 = 0;       // максимальное время работы модема
 
 void setup()
 {
@@ -54,10 +68,24 @@ void setup()
     }
     
     _radioData.FromRadioId = RADIO_ID;
+
+    
+enc1.setType(TYPE2);    // тип энкодера TYPE1 одношаговый, TYPE2 двухшаговый. Если ваш энкодер работает странно, смените тип
 }
 
 void loop()
 {
+
+
+  enc1.tick();
+if (enc1.isRight()) _radioData.value++;      // если был поворот направо, увеличиваем на 1
+if (enc1.isLeft()) _radioData.value--;     // если был поворот налево, уменьшаем на 1
+if (enc1.isRightH()) _radioData.value += 5;  // если было удержание + поворот направо, увеличиваем на 5
+if (enc1.isLeftH()) _radioData.value -= 5; // если было удержание + поворот налево, уменьшаем на 5  
+if (enc1.isTurn()) {       // если был совершён поворот (индикатор поворота в любую сторону)
+Serial.println(_radioData.value);   // выводим значение при повороте
+
+for (int i=0; i<3; i++){
     _radioData.OnTimeMillis = millis();
     _radioData.OnTimeS = millis()/1000;
 
@@ -82,6 +110,6 @@ void loop()
         Serial.println("...Failed");
         _radioData.FailedTxCount++;
     }
-
-    delay(100);
+}
+}
 }
