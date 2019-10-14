@@ -32,7 +32,7 @@ struct RadioPacket // Any packet up to 32 bytes can be sent.
     uint32_t OnTimeMillis;
     uint32_t OnTimeS;
     uint32_t FailedTxCount;
-    int16_t value=500;
+    int16_t value;
 };
 
 NRFLite _radio;
@@ -79,18 +79,23 @@ void loop()
 {
 
 
-  enc1.tick();
+/*  enc1.tick();
 if (enc1.isRight()) _radioData.value += 20;      // если был поворот направо, увеличиваем на 1
 if (enc1.isLeft()) _radioData.value -= 20;     // если был поворот налево, уменьшаем на 1
 if (enc1.isRightH()) _radioData.value += 20;  // если было удержание + поворот направо, увеличиваем на 5
 if (enc1.isLeftH()) _radioData.value -= 20; // если было удержание + поворот налево, уменьшаем на 5  
 if (enc1.isTurn()) {       // если был совершён поворот (индикатор поворота в любую сторону)
+*/
+delay(15);
+if ( (_radioData.value - analogRead(A0)) > 2 || (_radioData.value - analogRead(A0)) < -2)
+   {
+   _radioData.value =analogRead(A0);
   if (_radioData.value < 0) _radioData.value = 0;
-  if (_radioData.value > 1000) _radioData.value = 1000;
+  if (_radioData.value > 1023) _radioData.value = 1023;
   
 Serial.println(_radioData.value);   // выводим значение при повороте
 
-for (int i=0; i<3; i++){
+for (int i=0; i<5; i++){
     _radioData.OnTimeMillis = millis();
     _radioData.OnTimeS = millis()/1000;
 
